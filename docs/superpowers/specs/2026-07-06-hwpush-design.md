@@ -1,8 +1,8 @@
-# hboard 设计规格
+# hwpush 设计规格
 
 ## 概述
 
-**hiboard** 是一个用 Rust 编写的全能任务管理 CLI 工具，核心功能是将任务结果推送到华为负一屏。它是 `today-task` OpenClaw Skill 的 Rust 原生替代品，不依赖 Python/OpenClaw 环境，提供更完整的任务管理工作流。
+**hwpush** 是一个用 Rust 编写的 CLI 工具，核心功能是将 Markdown 任务结果推送到华为负一屏。它是 `today-task` OpenClaw Skill 的 Rust 原生替代品，不依赖 Python/OpenClaw 环境。
 
 ## 设计目标
 
@@ -14,12 +14,12 @@
 ## 项目结构
 
 ```
-playground/hiboard/
+playground/hwpush/
 ├── src/
 │   ├── main.rs              # CLI 入口 + clap 定义
 │   ├── cli/
 │   │   ├── mod.rs           # 命令路由
-│   │   ├── push.rs          # task-push 子命令
+│   │   ├── push.rs          # push 子命令
 │   │   ├── init.rs          # init 子命令
 │   │   └── template.rs      # template 子命令
 │   ├── core/
@@ -28,7 +28,7 @@ playground/hiboard/
 │   │   └── validator.rs     # 数据验证
 │   ├── config/
 │   │   ├── mod.rs
-│   │   ├── profile.rs       # ~/.config/hiboard/config.toml 读写
+│   │   ├── profile.rs       # ~/.config/hwpush/config.toml 读写
 │   │   └── keychain.rs      # macOS Keychain 集成
 │   ├── template/
 │   │   ├── mod.rs
@@ -39,38 +39,39 @@ playground/hiboard/
 ├── templates/               # 内置模板
 │   ├── daily.md
 │   └── news.md
+├── tests/                   # 集成测试与 E2E 测试
+│   ├── integration_test.rs  # 8 个用例，可在 CI 执行
+│   └── e2e/                 # 三种负一屏卡片类型测试
 └── Cargo.toml
 ```
 
 ## CLI 命令设计
 
-### `hiboard init` — 初始化
+### `hwpush init` — 初始化
 
 ```bash
-hiboard init
+hwpush init
 ```
 
 流程：
-1. 检查 `~/.config/hiboard/config.toml`，不存在则创建默认配置
+1. 检查 `~/.config/hwpush/config.toml`，不存在则创建默认配置
 2. 引导输入授权码，存入 macOS Keychain
-3. 可选配置推送 URL（回车使用默认 `https://hiboard-claw-drcn.ai.dbankcloud.cn/distribution/message/cloud/claw/msg/upload`）
-4. 执行测试推送验证配置
-5. 输出初始化结果
+3. 创建模板目录和存储目录
 
-### `hiboard push` — 推送任务
+### `hwpush push` — 推送任务
 
 ```bash
 # 从文件
-hiboard push --file result.md --name "日报"
+hwpush push --file result.md --name "日报"
 
 # 从 stdin
-echo "# 日报" | hiboard push --name "日报"
+echo "# 日报" | hwpush push --name "日报"
 
 # 使用模板
-hiboard push --template daily --var project=hiboard
+hwpush push --template daily --var project=hwpush
 
 # 试运行
-hiboard push --file report.md --name "测试" --dry-run
+hwpush push --file report.md --name "测试" --dry-run
 ```
 
 **参数：**
@@ -85,22 +86,22 @@ hiboard push --file report.md --name "测试" --dry-run
 | `--schedule-id` / `-s` | ❌ | 周期任务 ID |
 | `--dry-run` | ❌ | 试运行 |
 
-### `hiboard template` — 模板管理
+### `hwpush template` — 模板管理
 
 ```bash
-hiboard template list           # 列出模板
-hiboard template show daily     # 查看模板
-hiboard template new my-report  # 创建模板
-hiboard template edit my-report # 编辑模板（$EDITOR）
-hiboard template delete my-report # 删除模板
+hwpush template list           # 列出模板
+hwpush template show daily     # 查看模板
+hwpush template new my-report  # 创建模板
+hwpush template edit my-report # 编辑模板（$EDITOR）
+hwpush template delete my-report # 删除模板
 ```
 
-### `hiboard config` — 配置管理
+### `hwpush config` — 配置管理
 
 ```bash
-hiboard config get              # 查看配置
-hiboard config set key value    # 修改配置
-hiboard config auth             # 更新 Keychain 授权码
+hwpush config get              # 查看配置
+hwpush config set key value    # 修改配置
+hwpush config auth             # 更新 Keychain 授权码
 ```
 
 ## 推送流程
@@ -118,8 +119,7 @@ hiboard config auth             # 更新 Keychain 授权码
              ▼
   ┌─ validator ───────────────────────┐
   │  1. 验证必需字段                   │
-  │  2. 验证时间戳范围                 │
-  │  3. 验证内容长度 ≤ 5000            │
+  │  2. 验证内容长度 ≤ 5000            │
   └──────────┬───────────────────────┘
              ▼
   ┌─ pusher ──────────────────────────┐
@@ -156,26 +156,14 @@ struct MsgContent {
 
 // 推送响应
 struct PushResponse {
-    success: bool,
     code: String,
     message: String,
-    task_id: String,
-    push_time: String,
-}
-
-// 错误类型
-enum PushError {
-    Network(String),
-    Auth(String),      // 0000900034
-    Service(String),   // 0200100004
-    Validation(String),
-    Keychain(String),
 }
 ```
 
 ## 配置系统
 
-### `~/.config/hiboard/config.toml`
+### `~/.config/hwpush/config.toml`
 
 ```toml
 [push]
@@ -189,16 +177,18 @@ result = "任务已完成"
 source = "OpenClaw"
 
 [storage]
-history_db_path = "~/.local/share/hiboard/history.db"
+# macOS: ~/Library/Application Support/hwpush/history.db
+# Linux: ~/.local/share/hwpush/history.db
+history_db_path = "~/.local/share/hwpush/history.db"
 ```
 
 ### Keychain 存储
 
 | Key | Service | Account |
 |---|---|---|
-| 授权码 | `hiboard` | `auth_code` |
+| 授权码 | `hwpush` | `auth_code` |
 
-读取优先级：Keychain → 环境变量 `HIBOARD_AUTH_CODE` → 报错
+读取优先级：Keychain → 环境变量 `HWPUSH_AUTH_CODE` → 报错
 
 ## 模板系统
 
@@ -228,7 +218,7 @@ variables:
 *生成时间: {{date}} {{time}}*
 ```
 
-模板目录优先级：`~/.config/hiboard/templates/` > 内置模板
+模板目录优先级：`~/.config/hwpush/templates/` > 内置模板
 
 ## 依赖清单
 
@@ -244,15 +234,16 @@ chrono = { version = "0.4", features = ["serde"] }
 security-framework = "3"
 dirs = "6"
 thiserror = "2"
+rpassword = "7"
 ```
 
 ## 错误处理策略
 
 | 错误类型 | 处理方式 |
 |---|---|
-| `Auth` (0000900034) | 提示重新 `hiboard init` 更新授权码 |
+| `Auth` (0000900034) | 提示运行 `hwpush config auth` 更新授权码 |
 | `Service` (0200100004) | 解析 CP 子错误码，给出具体操作步骤 |
-| `Network` | 提示检查网络，支持 `--retry N` 自动重试 |
+| `Network` | 提示检查网络，或调整配置中的 `push.retry_count` |
 | `Validation` | 输出字段级错误信息 |
 
 ## 与 today-task Skill 的兼容性
@@ -263,7 +254,6 @@ thiserror = "2"
 
 ## 非功能性需求
 
-- **输出格式**：成功/失败信息清晰可读，使用颜色区分（通过 termcolor 或类似库）
+- **输出格式**：成功/失败信息使用中文，清晰可读
 - **退出码**：0 成功 / 1 失败
-- **日志**：`--verbose` 输出详细日志到 stderr
 - **隐私**：日志中授权码脱敏显示（`abc***`）

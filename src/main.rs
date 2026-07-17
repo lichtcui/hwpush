@@ -6,9 +6,9 @@ mod core;
 mod storage;
 mod template;
 
-/// hiboard — 将任务结果推送到华为负一屏
+/// hwpush — 将任务结果（Markdown）推送到华为负一屏
 #[derive(Parser, Debug)]
-#[command(name = "hiboard", version, about = "将任务结果推送到华为负一屏")]
+#[command(name = "hwpush", version, about = "将任务结果推送到华为负一屏")]
 struct Cli {
     #[command(subcommand)]
     command: cli::Command,

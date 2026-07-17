@@ -2,11 +2,11 @@
 
 ## 项目概述
 
-**hiboard** — 将任务结果（Markdown）推送到华为负一屏的 Rust CLI 工具。零依赖二进制替代品，用于取代 `today-task` OpenClaw Skill。
+**hwpush** — 将任务结果（Markdown）推送到华为负一屏的 Rust CLI 工具。零依赖二进制替代品，用于取代 `today-task` OpenClaw Skill。
 
 ## Rust 版本与约定
 
-- **版本**: Edition 2024（Rust 1.96+）
+- **版本**: Edition 2024（Rust 1.85+）
 - **风格**: 标准 `cargo fmt`，使用 `clap` derive API 编写 CLI 参数
 - **错误处理**: 库代码使用 `thiserror`；CLI 层将错误转换为用户可读的消息
 - **依赖**: 力求精简，优先使用 Rust 标准库
@@ -16,11 +16,11 @@
 ```
 src/main.rs           → CLI 入口，clap 解析器
 src/cli/mod.rs        → 命令路由（Init/Push/Template/Config）
-src/cli/init.rs       → hiboard init
-src/cli/push.rs       → hiboard push（文件/标准输入/模板 → 校验 → 推送 → 记录）
-src/cli/template.rs   → hiboard template（列出/查看/新建/编辑/删除）
+src/cli/init.rs       → hwpush init
+src/cli/push.rs       → hwpush push（文件/标准输入/模板 → 校验 → 推送 → 记录）
+src/cli/template.rs   → hwpush template（列出/查看/新建/编辑/删除）
 src/config/mod.rs     → 配置模块根
-src/config/profile.rs → TOML 配置读写（~/.config/hiboard/config.toml）
+src/config/profile.rs → TOML 配置读写（~/.config/hwpush/config.toml）
 src/config/keychain.rs→ macOS Keychain 集成（security-framework）
 src/core/mod.rs       → 核心模块根
 src/core/pusher.rs    → 负载构建 + HTTP POST 到负一屏 API
@@ -34,9 +34,9 @@ templates/            → 内置模板（daily.md, news.md）
 
 ## 设计规则
 
-1. **认证码流程**: Keychain → `HIBOARD_AUTH_CODE` 环境变量 → 报错。禁止将认证码存入配置文件。
+1. **认证码流程**: Keychain → `HWPUSH_AUTH_CODE` 环境变量 → 报错。禁止将认证码存入配置文件。
 2. **API 兼容性**: 请求/响应格式必须与 `today-task` Skill 完全一致。成功返回 `code: "0000000000"`。
-3. **模板解析**: 用户目录（`~/.config/hiboard/templates/`）优先于内置模板。
+3. **模板解析**: 用户目录（`~/.config/hwpush/templates/`）优先于内置模板。
 4. **内容校验**: 最大 5000 字符；name 和 content 为必填字段。
 5. **隐私保护**: 认证码在日志中须脱敏显示（`abc***` 格式）。
 
@@ -44,15 +44,15 @@ templates/            → 内置模板（daily.md, news.md）
 
 | 用途 | 路径 |
 |------|------|
-| 配置文件 | `~/.config/hiboard/config.toml` |
-| 用户模板 | `~/.config/hiboard/templates/` |
-| SQLite 数据库 | macOS: `~/Library/Application Support/hiboard/history.db`<br>Linux: `~/.local/share/hiboard/history.db` |
-| Keychain 服务 | `hiboard` / account `auth_code` |
+| 配置文件 | `~/.config/hwpush/config.toml` |
+| 用户模板 | `~/.config/hwpush/templates/` |
+| SQLite 数据库 | macOS: `~/Library/Application Support/hwpush/history.db`<br>Linux: `~/.local/share/hwpush/history.db` |
+| Keychain 服务 | `hwpush` / account `auth_code` |
 
 ## CLI 命令树
 
 ```
-hiboard
+hwpush
 ├── init                          # 首次初始化
 ├── push -n <名称> [-f 文件] [-t 模板] [--var k=v] [--dry-run]
 ├── template
@@ -75,7 +75,7 @@ hiboard
 
 ## 参考：today-task Skill
 
-`today-task` OpenClaw Skill 是 hiboard 的参考实现。
+`today-task` OpenClaw Skill 是 hwpush 的参考实现。
 
 ```bash
 # 安装参考实现以供查阅
@@ -83,7 +83,7 @@ npx clawhub@latest install today-task --registry=https://mirror-cn.clawhub.com -
 ```
 
 关键参考文件：
-- `scripts/task_pusher.py` — 负载格式化逻辑（与 hiboard 格式一致）
+- `scripts/task_pusher.py` — 负载格式化逻辑（与 hwpush 格式一致）
 - `scripts/hiboards_client.py` — HTTP 客户端，带 x-trace-id 头、错误码处理
 - `scripts/task_push.py` — CLI 入口
 - `simple_example.json` / `task_output_temp.json` — 示例负载
@@ -145,5 +145,5 @@ tests/
 ### 常见操作
 
 - **添加新子命令**: 创建 `src/cli/new_cmd.rs`，在 `cli::Command` 中添加枚举变体，在 `cli::dispatch()` 中挂载分发。
-- **添加依赖**: 同时更新 `Cargo.toml` 和设计文档 `docs/superpowers/specs/` 中的"依赖"章节。
+- **添加依赖**: 同时更新 `Cargo.toml` 和设计文档 `docs/superpowers/specs/2026-07-06-hwpush-design.md` 中的"依赖"章节。
 - **添加内置模板**: 在 `templates/` 目录下放置 `.md` 文件并包含 TOML front matter。

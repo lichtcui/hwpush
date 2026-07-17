@@ -1,6 +1,6 @@
 use security_framework::os::macos::keychain::SecKeychain;
 
-const SERVICE_NAME: &str = "hiboard";
+const SERVICE_NAME: &str = "hwpush";
 const ACCOUNT_NAME: &str = "auth_code";
 
 pub fn set_auth_code(code: &str) -> Result<(), String> {

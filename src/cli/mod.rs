@@ -12,7 +12,7 @@ pub use template::*;
 
 #[derive(Subcommand, Debug)]
 pub enum Command {
-    /// 初始化 hiboard 配置
+    /// 初始化 hwpush 配置
     Init(InitArgs),
 
     /// 推送任务结果到负一屏

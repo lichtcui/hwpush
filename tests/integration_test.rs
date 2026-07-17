@@ -1,4 +1,4 @@
-//! hiboard 集成测试
+//! hwpush 集成测试
 //!
 //! 验证核心逻辑（负载构建、内容校验、模板渲染）的正确性。
 //! 不依赖网络和 Keychain，可在 CI 中执行。
@@ -28,7 +28,7 @@ fn test_build_payload_fields() {
     assert_eq!(msg.schedule_task_id, "weekly_test");
     assert_eq!(msg.source, "OpenClaw");
     assert!(msg.task_finish_time > 0);
-    assert!(msg.msg_id.starts_with("hiboard_"));
+    assert!(msg.msg_id.starts_with("hwpush_"));
 }
 
 /// 验证无 schedule_id 时字段为空
@@ -72,11 +72,11 @@ fn test_validate_content_too_long() {
 fn test_template_interpolation() {
     let template = "# {{project}} 日报\n\n状态: {{status}}";
     let mut vars = HashMap::new();
-    vars.insert("project".into(), "hiboard".into());
+    vars.insert("project".into(), "hwpush".into());
     vars.insert("status".into(), "已完成".into());
 
     let result = render_test_template(template, &vars);
-    assert_eq!(result, "# hiboard 日报\n\n状态: 已完成");
+    assert_eq!(result, "# hwpush 日报\n\n状态: 已完成");
 }
 
 /// 验证模板 Front-matter 剥离
@@ -122,7 +122,7 @@ fn build_test_payload(
     schedule_id: &Option<String>,
 ) -> TestPayload {
     let msg = TestMsgContent {
-        msg_id: format!("hiboard_{}", chrono::Utc::now().timestamp_millis()),
+        msg_id: format!("hwpush_{}", chrono::Utc::now().timestamp_millis()),
         schedule_task_id: schedule_id.clone().unwrap_or_default(),
         schedule_task_name: name.into(),
         summary: name.into(),

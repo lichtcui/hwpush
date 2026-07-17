@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 #
-# hiboard E2E 测试脚本
+# hwpush E2E 测试脚本
 # 测试三种负一屏卡片类型的推送
 #
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
-BINARY="$PROJECT_DIR/target/release/hiboard"
+BINARY="$PROJECT_DIR/target/release/hwpush"
 
 # 颜色
 GREEN='\033[0;32m'
@@ -25,18 +25,18 @@ fi
 
 # 检查认证码
 AUTH_CODE=""
-if [ -n "${HIBOARD_AUTH_CODE:-}" ]; then
-  AUTH_CODE="$HIBOARD_AUTH_CODE"
+if [ -n "${HWPUSH_AUTH_CODE:-}" ]; then
+  AUTH_CODE="$HWPUSH_AUTH_CODE"
 elif command -v security &>/dev/null; then
-  AUTH_CODE=$(security find-generic-password -s hiboard -a auth_code -w 2>/dev/null || true)
+  AUTH_CODE=$(security find-generic-password -s hwpush -a auth_code -w 2>/dev/null || true)
 fi
 
 if [ -z "$AUTH_CODE" ]; then
-  echo -e "${RED}❌ 未找到认证码。请设置 HIBOARD_AUTH_CODE 环境变量或通过 Keychain 配置。${NC}"
+  echo -e "${RED}❌ 未找到认证码。请设置 HWPUSH_AUTH_CODE 环境变量或通过 Keychain 配置。${NC}"
   exit 1
 fi
 
-export HIBOARD_AUTH_CODE="$AUTH_CODE"
+export HWPUSH_AUTH_CODE="$AUTH_CODE"
 
 run_test() {
   local name="$1"
@@ -57,7 +57,7 @@ run_test() {
 }
 
 echo -e "${CYAN}══════════════════════════════════════${NC}"
-echo -e "${CYAN}  hiboard E2E 测试套件${NC}"
+echo -e "${CYAN}  hwpush E2E 测试套件${NC}"
 echo -e "${CYAN}══════════════════════════════════════${NC}"
 
 run_test "E2E-标准任务卡" "standard_card.md" "3项完成"

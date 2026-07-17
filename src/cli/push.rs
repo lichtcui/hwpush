@@ -69,11 +69,11 @@ pub fn execute(args: PushArgs) -> Result<(), CliError> {
     // 3. Get auth code
     let auth_code: String = match config::keychain::get_auth_code() {
         Ok(code) => code,
-        Err(_) => match std::env::var("HIBOARD_AUTH_CODE") {
+        Err(_) => match std::env::var("HWPUSH_AUTH_CODE") {
             Ok(code) => code,
             Err(_) => {
                 return Err(CliError::Push(
-                    "未找到认证码。请运行 `hiboard config auth` 或设置 HIBOARD_AUTH_CODE 环境变量。"
+                    "未找到认证码。请运行 `hwpush config auth` 或设置 HWPUSH_AUTH_CODE 环境变量。"
                         .into(),
                 ));
             }

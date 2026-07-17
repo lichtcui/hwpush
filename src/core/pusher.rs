@@ -45,12 +45,12 @@ impl PushResponse {
 
 fn generate_msg_id() -> String {
     let ts = Utc::now().timestamp_millis();
-    format!("hiboard_{ts}")
+    format!("hwpush_{ts}")
 }
 
 fn generate_trace_id() -> String {
     let ts = Utc::now().timestamp_millis();
-    format!("hiboard_{ts:x}")
+    format!("hwpush_{ts:x}")
 }
 
 pub fn build_payload(

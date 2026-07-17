@@ -24,7 +24,7 @@ pub fn execute(_args: InitArgs) -> Result<(), CliError> {
             .map_err(|e| CliError::Keychain(e.to_string()))?;
         println!("认证码已保存到 Keychain。");
     } else {
-        println!("已跳过认证码设置。之后可通过 `hiboard config auth` 配置。");
+        println!("已跳过认证码设置。之后可通过 `hwpush config auth` 配置。");
     }
 
     // 3. Create default templates directory
@@ -39,6 +39,6 @@ pub fn execute(_args: InitArgs) -> Result<(), CliError> {
         .map_err(|e| CliError::Config(format!("创建存储目录失败: {e}")))?;
     println!("存储目录已就绪: {}", storage_dir.display());
 
-    println!("\n✅ hiboard 初始化成功！");
+    println!("\n✅ hwpush 初始化成功！");
     Ok(())
 }

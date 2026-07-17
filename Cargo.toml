@@ -1,8 +1,8 @@
 [package]
-name = "hiboard"
+name = "hwpush"
 version = "0.1.0"
 edition = "2024"
-description = "A Rust CLI tool for pushing task results to Huawei negative screen (负一屏)"
+description = "将任务结果（Markdown）推送到华为负一屏的 Rust CLI 工具"
 
 [dependencies]
 clap = { version = "4", features = ["derive"] }

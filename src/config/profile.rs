@@ -81,24 +81,24 @@ impl StorageConfig {
     fn default_db_path() -> PathBuf {
         let base = dirs::data_local_dir()
             .unwrap_or_else(|| PathBuf::from("~/.local/share"));
-        base.join("hiboard").join("history.db")
+        base.join("hwpush").join("history.db")
     }
 }
 
 pub fn default_config_path() -> PathBuf {
     let base = dirs::config_dir().unwrap_or_else(|| PathBuf::from("~/.config"));
-    base.join("hiboard").join("config.toml")
+    base.join("hwpush").join("config.toml")
 }
 
 pub fn default_template_dir() -> PathBuf {
     let base = dirs::config_dir().unwrap_or_else(|| PathBuf::from("~/.config"));
-    base.join("hiboard").join("templates")
+    base.join("hwpush").join("templates")
 }
 
 pub fn default_storage_dir() -> PathBuf {
     let base = dirs::data_local_dir()
         .unwrap_or_else(|| PathBuf::from("~/.local/share"));
-    base.join("hiboard")
+    base.join("hwpush")
 }
 
 pub fn load() -> Result<Config, CliError> {

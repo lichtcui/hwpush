@@ -1,8 +1,8 @@
-# hiboard
+# hwpush
 
 > 将任务结果（Markdown）推送到华为负一屏 — Rust CLI 工具。
 
-hiboard 是一个轻量级、零依赖的二进制工具，用于替代 `today-task` OpenClaw Skill。它通过简单的 CLI 工作流，将 Markdown 格式的任务结果推送到华为负一屏。
+hwpush（Huawei Push）是一个轻量级、零依赖的二进制工具，用于替代 `today-task` OpenClaw Skill。它通过简单的 CLI 工作流，将 Markdown 格式的任务结果推送到华为负一屏。
 
 ## 特性
 
@@ -16,15 +16,15 @@ hiboard 是一个轻量级、零依赖的二进制工具，用于替代 `today-t
 ## 安装
 
 ```bash
-cargo install hiboard
+cargo install hwpush
 ```
 
 或从源码构建：
 
 ```bash
-git clone <仓库地址> && cd hiboard
+git clone <仓库地址> && cd hwpush
 cargo build --release
-./target/release/hiboard --help
+./target/release/hwpush --help
 ```
 
 ## 展示类型（卡片模板）
@@ -49,40 +49,40 @@ echo "# 今日工作
 - 修复已知 Bug
 
 ## 明日计划
-- 性能优化" | hiboard push --name "开发日报" --result "3项完成" --dry-run
+- 性能优化" | hwpush push --name "开发日报" --result "3项完成" --dry-run
 
 # 2) 周期任务卡片 — 相同格式，添加 schedule-id 用于重复
 echo "# 周报
 
-本周完成：项目上线" | hiboard push --name "周报" --schedule-id "weekly_report" --dry-run
+本周完成：项目上线" | hwpush push --name "周报" --schedule-id "weekly_report" --dry-run
 
 # 3) 仅摘要卡片 — 精简内容，紧凑展示
-echo "完成" | hiboard push --name "日常任务" --result "已完成" --dry-run
+echo "完成" | hwpush push --name "日常任务" --result "已完成" --dry-run
 ```
 
-实际推送（先执行 `hiboard config auth` 配置认证码）：
+实际推送（先执行 `hwpush config auth` 配置认证码）：
 
 ```bash
-echo "# 测试通过" | hiboard push --name "标准任务卡测试" --result "测试通过"
+echo "# 测试通过" | hwpush push --name "标准任务卡测试" --result "测试通过"
 ```
 
 ## 快速开始
 
 ```bash
 # 初始化配置
-hiboard init
+hwpush init
 
 # 从文件推送
-hiboard push --file result.md --name "日报"
+hwpush push --file result.md --name "日报"
 
 # 从标准输入推送
-echo "# 快速笔记" | hiboard push --name "笔记"
+echo "# 快速笔记" | hwpush push --name "笔记"
 
 # 使用模板
-hiboard push --template daily --var project=hiboard
+hwpush push --template daily --var project=hwpush
 
 # 试运行以检查负载内容
-hiboard push --file report.md --name "测试" --dry-run
+hwpush push --file report.md --name "测试" --dry-run
 ```
 
 ## 命令
@@ -108,7 +108,7 @@ hiboard push --file report.md --name "测试" --dry-run
 
 ## 配置
 
-配置文件路径：`~/.config/hiboard/config.toml`
+配置文件路径：`~/.config/hwpush/config.toml`
 
 ```toml
 [push]
@@ -122,14 +122,14 @@ result = "任务已完成"
 source = "OpenClaw"
 
 [storage]
-# macOS: ~/Library/Application Support/hiboard/history.db
-# Linux: ~/.local/share/hiboard/history.db
-history_db_path = "~/.local/share/hiboard/history.db"
+# macOS: ~/Library/Application Support/hwpush/history.db
+# Linux: ~/.local/share/hwpush/history.db
+history_db_path = "~/.local/share/hwpush/history.db"
 ```
 
 认证码优先级：
-1. macOS Keychain（通过 `hiboard config auth` 或 `hiboard init` 设置）
-2. 环境变量 `HIBOARD_AUTH_CODE`
+1. macOS Keychain（通过 `hwpush config auth` 或 `hwpush init` 设置）
+2. 环境变量 `HWPUSH_AUTH_CODE`
 
 ## 模板
 
@@ -150,12 +150,12 @@ variables:
 {{content}}
 ```
 
-模板解析优先级：`~/.config/hiboard/templates/` > 内置模板。
+模板解析优先级：`~/.config/hwpush/templates/` > 内置模板。
 
 ## 项目结构
 
 ```
-hiboard/
+hwpush/
 ├── src/
 │   ├── main.rs              # CLI 入口
 │   ├── cli/                 # 命令路由（init, push, template, config）
@@ -181,7 +181,7 @@ hiboard/
    - 若关闭，API 返回错误 `0200100004`，CP 子码 `82600013`
 3. **设备在线** — 手机须有网络连接
    - 若离线，API 返回错误 `0200100004`，CP 子码 `82600017`
-4. **认证码有效** — 认证码会定期过期；若遇到错误 `0000900034`，通过 `hiboard config auth` 更新
+4. **认证码有效** — 认证码会定期过期；若遇到错误 `0000900034`，通过 `hwpush config auth` 更新
 
 ## 测试
 
@@ -202,7 +202,7 @@ cargo test
 
 | 错误码 | 含义 | 处理方式 |
 |--------|------|---------|
-| `0000900034` | 认证错误 | 运行 `hiboard config auth` 更新认证码 |
+| `0000900034` | 认证错误 | 运行 `hwpush config auth` 更新认证码 |
 | `0200100004` | 服务错误 | 检查响应中的 CP 子码详情 |
 | 网络错误 | 连接失败 | 检查网络连接，或调整配置中的 `push.retry_count` |
 | 校验错误 | 负载无效 | 检查字段级别的错误信息 |
