@@ -22,7 +22,7 @@ cargo install hwpush
 或从源码构建：
 
 ```bash
-git clone <仓库地址> && cd hwpush
+git clone https://github.com/lichtcui/hwpush.git && cd hwpush
 cargo build --release
 ./target/release/hwpush --help
 ```
