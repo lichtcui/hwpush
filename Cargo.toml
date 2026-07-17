@@ -1,6 +1,6 @@
 [package]
 name = "hwpush"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 description = "将任务结果（Markdown）推送到华为负一屏的 Rust CLI 工具"
 license = "MIT"
