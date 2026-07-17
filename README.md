@@ -122,6 +122,8 @@ result = "任务已完成"
 source = "OpenClaw"
 
 [storage]
+# macOS: ~/Library/Application Support/hiboard/history.db
+# Linux: ~/.local/share/hiboard/history.db
 history_db_path = "~/.local/share/hiboard/history.db"
 ```
 
@@ -164,6 +166,9 @@ hiboard/
 ├── templates/               # 内置模板
 │   ├── daily.md
 │   └── news.md
+├── tests/                   # 集成测试与 E2E 测试
+│   ├── integration_test.rs  # 负载构建、校验、模板渲染（CI 可执行）
+│   └── e2e/                 # E2E 测试数据与脚本（需认证码+网络）
 └── Cargo.toml
 ```
 
@@ -178,13 +183,28 @@ hiboard/
    - 若离线，API 返回错误 `0200100004`，CP 子码 `82600017`
 4. **认证码有效** — 认证码会定期过期；若遇到错误 `0000900034`，通过 `hiboard config auth` 更新
 
+## 测试
+
+```bash
+# 运行集成测试（无需网络，可在 CI 执行）
+cargo test
+
+# 运行 E2E 测试（需配置认证码和网络连接）
+./tests/e2e/run.sh
+```
+
+| 测试层级 | 位置 | 依赖 | 内容 |
+|---------|------|------|------|
+| **集成测试** | `tests/integration_test.rs` | 无 | 负载构建、内容校验、模板渲染、Front-matter 剥离（8 用例） |
+| **E2E 测试** | `tests/e2e/` | 认证码 + 网络 | CLI 完整链路：三种负一屏卡片类型推送 |
+
 ## 错误码
 
 | 错误码 | 含义 | 处理方式 |
 |--------|------|---------|
 | `0000900034` | 认证错误 | 运行 `hiboard config auth` 更新认证码 |
 | `0200100004` | 服务错误 | 检查响应中的 CP 子码详情 |
-| 网络错误 | 连接失败 | 检查网络，使用 `--retry N` 重试 |
+| 网络错误 | 连接失败 | 检查网络连接，或调整配置中的 `push.retry_count` |
 | 校验错误 | 负载无效 | 检查字段级别的错误信息 |
 
 ## 许可协议

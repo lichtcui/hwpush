@@ -46,7 +46,7 @@ templates/            → 内置模板（daily.md, news.md）
 |------|------|
 | 配置文件 | `~/.config/hiboard/config.toml` |
 | 用户模板 | `~/.config/hiboard/templates/` |
-| SQLite 数据库 | `~/.local/share/hiboard/history.db` |
+| SQLite 数据库 | macOS: `~/Library/Application Support/hiboard/history.db`<br>Linux: `~/.local/share/hiboard/history.db` |
 | Keychain 服务 | `hiboard` / account `auth_code` |
 
 ## CLI 命令树
