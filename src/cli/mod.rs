@@ -34,11 +34,19 @@ pub struct ConfigArgs {
 #[derive(Subcommand, Debug)]
 pub enum ConfigAction {
     /// 查看当前配置
-    Get,
+    Get {
+        /// JSON 格式输出
+        #[arg(short, long)]
+        json: bool,
+    },
     /// 设置配置键值对
     Set { key: String, value: String },
     /// 更新 Keychain 认证码
-    Auth,
+    Auth {
+        /// 认证码（提供后跳过交互式输入）
+        #[arg(short, long)]
+        code: Option<String>,
+    },
 }
 
 #[derive(Debug, Error)]
@@ -67,9 +75,16 @@ pub fn dispatch(command: Command) -> Result<(), CliError> {
 
 fn execute_config(args: ConfigArgs) -> Result<(), CliError> {
     match args.action {
-        ConfigAction::Get => {
+        ConfigAction::Get { json } => {
             let cfg = config::profile::load()?;
-            println!("{}", toml::to_string_pretty(&cfg).unwrap_or_default());
+            if json {
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&cfg).unwrap_or_default()
+                );
+            } else {
+                println!("{}", toml::to_string_pretty(&cfg).unwrap_or_default());
+            }
             Ok(())
         }
         ConfigAction::Set { key, value } => {
@@ -79,7 +94,13 @@ fn execute_config(args: ConfigArgs) -> Result<(), CliError> {
             println!("配置已更新: {key} = {value}");
             Ok(())
         }
-        ConfigAction::Auth => {
+        ConfigAction::Auth { code: Some(code) } => {
+            config::keychain::set_auth_code(&code)
+                .map_err(|e| CliError::Keychain(e.to_string()))?;
+            println!("认证码已更新到 Keychain。");
+            Ok(())
+        }
+        ConfigAction::Auth { code: None } => {
             let code = rpassword::prompt_password("请输入认证码: ")
                 .map_err(|e| CliError::Config(e.to_string()))?;
             config::keychain::set_auth_code(&code)

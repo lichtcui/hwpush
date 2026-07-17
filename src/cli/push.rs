@@ -34,6 +34,10 @@ pub struct PushArgs {
     /// 试运行（仅校验，不推送）
     #[arg(long)]
     pub dry_run: bool,
+
+    /// JSON 格式输出（便于 AI 和脚本调用）
+    #[arg(short, long)]
+    pub json: bool,
 }
 
 pub fn execute(args: PushArgs) -> Result<(), CliError> {
@@ -85,12 +89,21 @@ pub fn execute(args: PushArgs) -> Result<(), CliError> {
     let payload = pusher::build_payload(&auth_code, &args.name, &content, &result, &args.schedule_id);
 
     if args.dry_run {
-        println!("--- 试运行 ---");
-        println!(
-            "负载内容:\n{}",
-            serde_json::to_string_pretty(&payload).unwrap_or_default()
-        );
-        println!("--- 试运行结束 ---");
+        // 脱敏处理：复制 payload 并隐藏认证码
+        let mut sanitized = payload.clone();
+        sanitized.data.auth_code = "***".to_string();
+        let payload_json =
+            serde_json::to_string_pretty(&sanitized).unwrap_or_default();
+        if args.json {
+            println!(
+                "{}",
+                serde_json::json!({"dry_run": true, "payload": &sanitized})
+            );
+        } else {
+            println!("--- 试运行 ---");
+            println!("负载内容:\n{payload_json}");
+            println!("--- 试运行结束 ---");
+        }
         return Ok(());
     }
 
@@ -108,17 +121,38 @@ pub fn execute(args: PushArgs) -> Result<(), CliError> {
 
     // 7. Output result
     if response.success() {
-        println!("✅ API 已接受推送请求（状态码: {}）", response.code);
-        println!("");
-        println!("   📱 如果设备未收到通知，请检查：");
-        println!("      1. 确保已登录华为账号");
-        println!("      2. 打开负一屏 → 头像 → 我的 → 动态管理");
-        println!("      3. 确保「AI 任务完成通知」开关已开启");
-        println!("      4. 确保设备网络连接正常");
+        if args.json {
+            println!(
+                "{}",
+                serde_json::json!({
+                    "success": true,
+                    "code": response.code,
+                })
+            );
+        } else {
+            println!("✅ API 已接受推送请求（状态码: {}）", response.code);
+            println!("");
+            println!("   📱 如果设备未收到通知，请检查：");
+            println!("      1. 确保已登录华为账号");
+            println!("      2. 打开负一屏 → 头像 → 我的 → 动态管理");
+            println!("      3. 确保「AI 任务完成通知」开关已开启");
+            println!("      4. 确保设备网络连接正常");
+        }
     } else {
-        println!("❌ 推送失败！");
-        println!("   状态码: {}", response.code);
-        println!("   错误信息: {}", response.message);
+        if args.json {
+            println!(
+                "{}",
+                serde_json::json!({
+                    "success": false,
+                    "code": response.code,
+                    "message": response.message,
+                })
+            );
+        } else {
+            println!("❌ 推送失败！");
+            println!("   状态码: {}", response.code);
+            println!("   错误信息: {}", response.message);
+        }
         return Err(CliError::Push(response.message));
     }
 

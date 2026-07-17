@@ -66,11 +66,38 @@ echo "完成" | hwpush push --name "日常任务" --result "已完成" --dry-run
 echo "# 测试通过" | hwpush push --name "标准任务卡测试" --result "测试通过"
 ```
 
+## AI / 脚本调用
+
+hwpush 提供 `--json` 标志和 `--code` 参数，方便 AI 和自动化脚本调用。
+
+```bash
+# 一键初始化（非交互式）
+hwpush init --code "your_auth_code"
+
+# 推送并获取 JSON 结果
+hwpush push --name "日报" --file report.md --json
+# {"code":"0000000000","success":true}
+
+# 模板列表 JSON
+hwpush template list --json
+# [{"description":"日报模板","name":"daily"}]
+
+# 查看配置 JSON
+hwpush config get --json
+# {"push":{"dry_run":false,"retry_count":3,"service_url":"...","timeout_secs":30},"defaults":{...},"storage":{...}}
+
+# 更新认证码（非交互式）
+hwpush config auth --code "new_code"
+```
+
 ## 快速开始
 
 ```bash
-# 初始化配置
+# 初始化配置（交互式）
 hwpush init
+
+# 一键初始化（提供认证码）
+hwpush init --code "your_auth_code"
 
 # 从文件推送
 hwpush push --file result.md --name "日报"
@@ -83,16 +110,21 @@ hwpush push --template daily --var project=hwpush
 
 # 试运行以检查负载内容
 hwpush push --file report.md --name "测试" --dry-run
+
+# JSON 输出（适用于脚本调用）
+hwpush push --name "测试" --file report.md --json
 ```
 
 ## 命令
 
 | 命令 | 说明 |
 |------|------|
-| `init` | 创建配置、将认证码存入 Keychain、准备目录 |
-| `push` | 将任务内容推送到负一屏 |
-| `template` | 列出、查看、创建、编辑、删除模板 |
-| `config` | 查看/设置配置或更新 Keychain 认证码 |
+| 命令 | 说明 |
+|------|------|
+| `init` | 创建配置、将认证码存入 Keychain、准备目录（支持 `--code` 非交互式） |
+| `push` | 将任务内容推送到负一屏（支持 `--json` 输出） |
+| `template` | 列出、查看、创建、编辑、删除模板（`list` 支持 `--json`） |
+| `config` | 查看/设置配置或更新 Keychain 认证码（`get` 支持 `--json`，`auth` 支持 `--code`） |
 
 ### `push` 选项
 
@@ -105,6 +137,7 @@ hwpush push --file report.md --name "测试" --dry-run
 | `--result / -r` | ❌ | 结果文本（默认："任务已完成"） |
 | `--schedule-id / -s` | ❌ | 周期任务 ID |
 | `--dry-run` | ❌ | 仅校验，不发送 |
+| `--json / -j` | ❌ | JSON 格式输出（适用于 AI 和脚本调用） |
 
 ## 配置
 
@@ -128,7 +161,7 @@ history_db_path = "~/.local/share/hwpush/history.db"
 ```
 
 认证码优先级：
-1. macOS Keychain（通过 `hwpush config auth` 或 `hwpush init` 设置）
+1. macOS Keychain（通过 `hwpush config auth --code <code>` / `hwpush init --code <code>` 或交互式方式设置）
 2. 环境变量 `HWPUSH_AUTH_CODE`
 
 ## 模板

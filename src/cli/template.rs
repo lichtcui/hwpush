@@ -11,7 +11,11 @@ pub struct TemplateArgs {
 #[derive(Subcommand, Debug)]
 pub enum TemplateAction {
     /// 列出所有模板
-    List,
+    List {
+        /// JSON 格式输出
+        #[arg(short, long)]
+        json: bool,
+    },
     /// 查看模板内容
     Show { name: String },
     /// 创建新模板
@@ -24,16 +28,29 @@ pub enum TemplateAction {
 
 pub fn execute(args: TemplateArgs) -> Result<(), CliError> {
     match args.action {
-        TemplateAction::List => {
+        TemplateAction::List { json } => {
             let list = template::manager::list()
                 .map_err(|e| CliError::Template(e.to_string()))?;
-            if list.is_empty() {
-                println!("未找到模板。");
-                return Ok(());
-            }
-            println!("可用模板:");
-            for tmpl in &list {
-                println!("  - {}: {}", tmpl.name, tmpl.description.as_deref().unwrap_or(""));
+            if json {
+                let output: Vec<serde_json::Value> = list
+                    .iter()
+                    .map(|t| {
+                        serde_json::json!({
+                            "name": t.name,
+                            "description": t.description,
+                        })
+                    })
+                    .collect();
+                println!("{}", serde_json::to_string_pretty(&output).unwrap_or_default());
+            } else {
+                if list.is_empty() {
+                    println!("未找到模板。");
+                    return Ok(());
+                }
+                println!("可用模板:");
+                for tmpl in &list {
+                    println!("  - {}: {}", tmpl.name, tmpl.description.as_deref().unwrap_or(""));
+                }
             }
         }
         TemplateAction::Show { name } => {

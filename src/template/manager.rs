@@ -22,7 +22,7 @@ pub fn list() -> Result<Vec<TemplateInfo>, String> {
             let entry = entry.map_err(|e| format!("读取目录项失败: {e}"))?;
             let path = entry.path();
             if path.extension().is_some_and(|ext| ext == "md") {
-                let name = path.file_stem().unwrap().to_string_lossy().into();
+                let name = path.file_stem().unwrap_or_default().to_string_lossy().into();
                 let desc = parse_front_matter(&path).ok().flatten();
                 templates.push(TemplateInfo {
                     name,
@@ -42,7 +42,7 @@ pub fn list() -> Result<Vec<TemplateInfo>, String> {
             let entry = entry.map_err(|e| format!("读取目录项失败: {e}"))?;
             let path = entry.path();
             if path.extension().is_some_and(|ext| ext == "md") {
-                let name = path.file_stem().unwrap().to_string_lossy().into();
+                let name = path.file_stem().unwrap_or_default().to_string_lossy().into();
                 // Skip if user has overridden
                 if templates.iter().any(|t| t.name == name) {
                     continue;

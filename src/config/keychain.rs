@@ -31,8 +31,8 @@ pub fn get_auth_code() -> Result<String, String> {
 fn delete_auth_code() -> Result<(), String> {
     let keychain = SecKeychain::default().map_err(|e| format!("打开 Keychain 失败: {e}"))?;
 
-    if let Ok((_, _item)) = keychain.find_generic_password(SERVICE_NAME, ACCOUNT_NAME) {
-        // delete() returns (), no error to propagate
+    if let Ok((_, item)) = keychain.find_generic_password(SERVICE_NAME, ACCOUNT_NAME) {
+        item.delete();
     }
 
     Ok(())

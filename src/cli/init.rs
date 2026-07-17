@@ -3,9 +3,13 @@ use crate::cli::CliError;
 use crate::config;
 
 #[derive(Args, Debug)]
-pub struct InitArgs;
+pub struct InitArgs {
+    /// 认证码（提供后跳过交互式输入）
+    #[arg(short, long)]
+    pub code: Option<String>,
+}
 
-pub fn execute(_args: InitArgs) -> Result<(), CliError> {
+pub fn execute(args: InitArgs) -> Result<(), CliError> {
     // 1. Create default config if not exists
     let config_path = config::profile::default_config_path();
     if config_path.exists() {
@@ -16,15 +20,21 @@ pub fn execute(_args: InitArgs) -> Result<(), CliError> {
         println!("已创建默认配置文件: {}", config_path.display());
     }
 
-    // 2. Prompt for auth code and store in Keychain
-    let code = rpassword::prompt_password("请输入认证码（直接回车跳过）: ")
-        .map_err(|e| CliError::Config(e.to_string()))?;
-    if !code.is_empty() {
-        config::keychain::set_auth_code(&code)
+    // 2. Auth code: use --code flag or prompt interactively
+    if let Some(code) = &args.code {
+        config::keychain::set_auth_code(code)
             .map_err(|e| CliError::Keychain(e.to_string()))?;
         println!("认证码已保存到 Keychain。");
     } else {
-        println!("已跳过认证码设置。之后可通过 `hwpush config auth` 配置。");
+        let code = rpassword::prompt_password("请输入认证码（直接回车跳过）: ")
+            .map_err(|e| CliError::Config(e.to_string()))?;
+        if !code.is_empty() {
+            config::keychain::set_auth_code(&code)
+                .map_err(|e| CliError::Keychain(e.to_string()))?;
+            println!("认证码已保存到 Keychain。");
+        } else {
+            println!("已跳过认证码设置。之后可通过 `hwpush config auth` 配置。");
+        }
     }
 
     // 3. Create default templates directory
