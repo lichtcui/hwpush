@@ -286,3 +286,7 @@ cargo test
 ## 许可协议
 
 MIT
+
+## 发布
+
+发布到 crates.io 的流程见 [docs/publishing.md](docs/publishing.md)。
