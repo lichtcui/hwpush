@@ -13,6 +13,9 @@ pub struct Config {
 
     #[serde(default)]
     pub storage: StorageConfig,
+
+    #[serde(default)]
+    pub skill: SkillConfig,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -39,12 +42,21 @@ pub struct StorageConfig {
     pub history_db_path: String,
 }
 
+/// skill 更新检查相关配置
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SkillConfig {
+    /// hwpush 已对标同步的 today-task skill 版本
+    #[serde(default = "default_synced_version")]
+    pub synced_version: String,
+}
+
 impl Default for Config {
     fn default() -> Self {
         Self {
             push: PushConfig::default(),
             defaults: DefaultsConfig::default(),
             storage: StorageConfig::default(),
+            skill: SkillConfig::default(),
         }
     }
 }
@@ -77,10 +89,17 @@ impl Default for StorageConfig {
     }
 }
 
+impl Default for SkillConfig {
+    fn default() -> Self {
+        Self {
+            synced_version: default_synced_version(),
+        }
+    }
+}
+
 impl StorageConfig {
     fn default_db_path() -> PathBuf {
-        let base = dirs::data_local_dir()
-            .unwrap_or_else(|| PathBuf::from("~/.local/share"));
+        let base = dirs::data_local_dir().unwrap_or_else(|| PathBuf::from("~/.local/share"));
         base.join("hwpush").join("history.db")
     }
 }
@@ -96,8 +115,7 @@ pub fn default_template_dir() -> PathBuf {
 }
 
 pub fn default_storage_dir() -> PathBuf {
-    let base = dirs::data_local_dir()
-        .unwrap_or_else(|| PathBuf::from("~/.local/share"));
+    let base = dirs::data_local_dir().unwrap_or_else(|| PathBuf::from("~/.local/share"));
     base.join("hwpush")
 }
 
@@ -108,8 +126,8 @@ pub fn load() -> Result<Config, CliError> {
     }
     let content = std::fs::read_to_string(&path)
         .map_err(|e| CliError::Config(format!("读取配置文件失败: {e}")))?;
-    let cfg: Config = toml::from_str(&content)
-        .map_err(|e| CliError::Config(format!("解析配置文件失败: {e}")))?;
+    let cfg: Config =
+        toml::from_str(&content).map_err(|e| CliError::Config(format!("解析配置文件失败: {e}")))?;
     Ok(cfg)
 }
 
@@ -135,6 +153,7 @@ pub fn set_value(cfg: &mut Config, key: &str, value: &str) {
         "defaults.result" => cfg.defaults.result = value.into(),
         "defaults.source" => cfg.defaults.source = value.into(),
         "storage.history_db_path" => cfg.storage.history_db_path = value.into(),
+        "skill.synced_version" => cfg.skill.synced_version = value.into(),
         _ => eprintln!("未知配置项: {key}"),
     }
 }
@@ -153,4 +172,9 @@ fn default_result() -> String {
 
 fn default_source() -> String {
     "OpenClaw".into()
+}
+
+fn default_synced_version() -> String {
+    // hwpush 负载格式已验证对齐的 today-task 版本
+    "1.0.17".into()
 }

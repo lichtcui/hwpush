@@ -16,13 +16,16 @@ pub fn list() -> Result<Vec<TemplateInfo>, String> {
     // List user templates
     let user_dir = profile::default_template_dir();
     if user_dir.exists() {
-        let entries = std::fs::read_dir(&user_dir)
-            .map_err(|e| format!("读取模板目录失败: {e}"))?;
+        let entries = std::fs::read_dir(&user_dir).map_err(|e| format!("读取模板目录失败: {e}"))?;
         for entry in entries {
             let entry = entry.map_err(|e| format!("读取目录项失败: {e}"))?;
             let path = entry.path();
             if path.extension().is_some_and(|ext| ext == "md") {
-                let name = path.file_stem().unwrap_or_default().to_string_lossy().into();
+                let name = path
+                    .file_stem()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .into();
                 let desc = parse_front_matter(&path).ok().flatten();
                 templates.push(TemplateInfo {
                     name,
@@ -36,13 +39,17 @@ pub fn list() -> Result<Vec<TemplateInfo>, String> {
     // List built-in templates
     let builtin_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("templates");
     if builtin_dir.exists() {
-        let entries = std::fs::read_dir(&builtin_dir)
-            .map_err(|e| format!("读取内置模板目录失败: {e}"))?;
+        let entries =
+            std::fs::read_dir(&builtin_dir).map_err(|e| format!("读取内置模板目录失败: {e}"))?;
         for entry in entries {
             let entry = entry.map_err(|e| format!("读取目录项失败: {e}"))?;
             let path = entry.path();
             if path.extension().is_some_and(|ext| ext == "md") {
-                let name = path.file_stem().unwrap_or_default().to_string_lossy().into();
+                let name = path
+                    .file_stem()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .into();
                 // Skip if user has overridden
                 if templates.iter().any(|t| t.name == name) {
                     continue;
@@ -79,8 +86,7 @@ pub fn resolve_path(name: &str) -> Option<PathBuf> {
 }
 
 pub fn read_raw(name: &str) -> Result<String, String> {
-    let path =
-        resolve_path(name).ok_or_else(|| format!("模板 '{name}' 未找到"))?;
+    let path = resolve_path(name).ok_or_else(|| format!("模板 '{name}' 未找到"))?;
     std::fs::read_to_string(&path).map_err(|e| format!("读取模板失败: {e}"))
 }
 
@@ -97,8 +103,7 @@ pub fn render(name: &str, vars: &HashMap<String, String>) -> Result<String, Stri
 
 pub fn create(name: &str) -> Result<(), String> {
     let dir = profile::default_template_dir();
-    std::fs::create_dir_all(&dir)
-        .map_err(|e| format!("创建模板目录失败: {e}"))?;
+    std::fs::create_dir_all(&dir).map_err(|e| format!("创建模板目录失败: {e}"))?;
 
     let path = dir.join(format!("{name}.md"));
     if path.exists() {
@@ -125,17 +130,14 @@ variables:
 "#
     );
 
-    std::fs::write(&path, default_content)
-        .map_err(|e| format!("写入模板失败: {e}"))?;
+    std::fs::write(&path, default_content).map_err(|e| format!("写入模板失败: {e}"))?;
 
     Ok(())
 }
 
 pub fn delete(name: &str) -> Result<(), String> {
-    let path = resolve_path(name)
-        .ok_or_else(|| format!("模板 '{name}' 未找到"))?;
-    std::fs::remove_file(&path)
-        .map_err(|e| format!("删除模板失败: {e}"))
+    let path = resolve_path(name).ok_or_else(|| format!("模板 '{name}' 未找到"))?;
+    std::fs::remove_file(&path).map_err(|e| format!("删除模板失败: {e}"))
 }
 
 pub fn parse_vars(var_args: &[String]) -> HashMap<String, String> {
@@ -159,8 +161,7 @@ pub fn parse_vars(var_args: &[String]) -> HashMap<String, String> {
 }
 
 fn parse_front_matter(path: &PathBuf) -> Result<Option<String>, String> {
-    let content = std::fs::read_to_string(path)
-        .map_err(|e| format!("读取文件失败: {e}"))?;
+    let content = std::fs::read_to_string(path).map_err(|e| format!("读取文件失败: {e}"))?;
 
     if let Some(body) = content.strip_prefix("---") {
         if let Some(end) = body.find("---") {
@@ -168,7 +169,11 @@ fn parse_front_matter(path: &PathBuf) -> Result<Option<String>, String> {
             for line in front.lines() {
                 if let Some(desc_val) = line.strip_prefix("description:") {
                     let desc = desc_val.trim().trim_matches('"').to_string();
-                    return if desc.is_empty() { Ok(None) } else { Ok(Some(desc)) };
+                    return if desc.is_empty() {
+                        Ok(None)
+                    } else {
+                        Ok(Some(desc))
+                    };
                 }
             }
         }

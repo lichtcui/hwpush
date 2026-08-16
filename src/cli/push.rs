@@ -1,9 +1,9 @@
-use clap::Args;
 use crate::cli::CliError;
+use crate::config;
 use crate::core::pusher;
 use crate::core::validator;
-use crate::config;
 use crate::storage::history;
+use clap::Args;
 
 #[derive(Args, Debug)]
 pub struct PushArgs {
@@ -45,9 +45,7 @@ pub fn execute(args: PushArgs) -> Result<(), CliError> {
 
     // 1. Read content from file, template, or stdin
     let content = if let Some(ref path) = args.file {
-        std::fs::read_to_string(path)
-            .map_err(|e| CliError::Push(format!("读取文件失败: {e}")))?
-
+        std::fs::read_to_string(path).map_err(|e| CliError::Push(format!("读取文件失败: {e}")))?
     } else if let Some(ref tmpl_name) = args.template {
         let vars = crate::template::manager::parse_vars(&args.var);
         crate::template::manager::render(tmpl_name, &vars)
@@ -67,8 +65,7 @@ pub fn execute(args: PushArgs) -> Result<(), CliError> {
     }
 
     // 2. Validate content
-    validator::validate_content(&content, &args.name)
-        .map_err(|e| CliError::Push(e.to_string()))?;
+    validator::validate_content(&content, &args.name).map_err(|e| CliError::Push(e.to_string()))?;
 
     // 3. Get auth code
     let auth_code: String = match config::keychain::get_auth_code() {
@@ -86,14 +83,14 @@ pub fn execute(args: PushArgs) -> Result<(), CliError> {
 
     // 4. Build payload and push
     let result = args.result.unwrap_or_else(|| cfg.defaults.result.clone());
-    let payload = pusher::build_payload(&auth_code, &args.name, &content, &result, &args.schedule_id);
+    let payload =
+        pusher::build_payload(&auth_code, &args.name, &content, &result, &args.schedule_id);
 
     if args.dry_run {
         // 脱敏处理：复制 payload 并隐藏认证码
         let mut sanitized = payload.clone();
         sanitized.data.auth_code = "***".to_string();
-        let payload_json =
-            serde_json::to_string_pretty(&sanitized).unwrap_or_default();
+        let payload_json = serde_json::to_string_pretty(&sanitized).unwrap_or_default();
         if args.json {
             println!(
                 "{}",

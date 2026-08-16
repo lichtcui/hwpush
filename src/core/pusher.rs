@@ -96,16 +96,14 @@ pub fn push(url: &str, payload: &PushPayload, timeout_secs: u64) -> Result<PushR
         .map_err(|e| format!("网络错误: {e}"))?;
 
     let status = resp.status();
-    let body = resp
-        .text()
-        .map_err(|e| format!("读取响应体失败: {e}"))?;
+    let body = resp.text().map_err(|e| format!("读取响应体失败: {e}"))?;
 
     if !status.is_success() {
         return Err(format!("HTTP {status}: {body}"));
     }
 
-    let push_resp: PushResponse = serde_json::from_str(&body)
-        .map_err(|e| format!("解析响应失败: {e}（响应体: {body}）"))?;
+    let push_resp: PushResponse =
+        serde_json::from_str(&body).map_err(|e| format!("解析响应失败: {e}（响应体: {body}）"))?;
 
     Ok(push_resp)
 }

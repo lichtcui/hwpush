@@ -119,12 +119,11 @@ hwpush push --name "测试" --file report.md --json
 
 | 命令 | 说明 |
 |------|------|
-| 命令 | 说明 |
-|------|------|
 | `init` | 创建配置、将认证码存入 Keychain、准备目录（支持 `--code` 非交互式） |
 | `push` | 将任务内容推送到负一屏（支持 `--json` 输出） |
 | `template` | 列出、查看、创建、编辑、删除模板（`list` 支持 `--json`） |
 | `config` | 查看/设置配置或更新 Keychain 认证码（`get` 支持 `--json`，`auth` 支持 `--code`） |
+| `skill-check` | 检查 `today-task` skill 是否有更新及新增内容（支持 `--json`） |
 
 ### `push` 选项
 
@@ -158,7 +157,51 @@ source = "OpenClaw"
 # macOS: ~/Library/Application Support/hwpush/history.db
 # Linux: ~/.local/share/hwpush/history.db
 history_db_path = "~/.local/share/hwpush/history.db"
+
+[skill]
+# hwpush 已对标同步的 today-task skill 版本（skill-check 的比对基线）
+synced_version = "1.0.17"
 ```
+
+## 检查 skill 更新
+
+hwpush 以 `today-task` OpenClaw Skill 为参考实现，负载格式必须与其完全兼容。`skill-check` 会拉取最新版 skill 的负载配置（`config.json` 与 `scripts/task_pusher.py`），**对比负载字段、推送地址、长度限制与 hwpush 实现是否一致**——只有真正需要修改代码时才详细展示变更内容：
+
+```bash
+# 检查是否有更新（对比配置中的同步基线版本）
+hwpush skill-check
+
+# 输出示例 1（有新版本，但格式完全兼容 → 一行提示，不刷 changelog）
+# ✅ 有更新（v1.0.14 → v1.0.17），但负载格式与 hwpush 完全兼容，无需修改代码
+
+# 输出示例 2（格式不兼容 → 列出差异项与更新内容）
+# 🚨 检测到需要关注的变更：v1.0.17 → v1.0.18
+# ⚠️ 不一致：fields
+#      skill 最新版: content, msgId, ..., xyz
+#      hwpush 当前值: content, msgId, ...
+# 📦 v1.0.18
+# - 重大变更：新增字段 xyz…
+
+# 修改实现并确认兼容后，将最新版本记录为已同步版本（写入配置 [skill].synced_version）
+hwpush skill-check --mark-synced
+
+# JSON 输出（便于 AI 和脚本调用）
+hwpush skill-check --json
+# {"has_update":false,"latest_version":"1.0.17","synced_version":"1.0.17","compatible":null,...}
+
+# 指定 ClawHub 仓库地址（默认 https://clawhub.com，可用环境变量 CLAWHUB_REGISTRY 覆盖）
+hwpush skill-check --registry https://clawhub.com
+```
+
+对比的兼容性指标（任一不一致即提示"需要关注"）：
+
+| 指标 | skill 侧来源 | hwpush 侧基准 |
+|------|-------------|--------------|
+| 推送服务地址 | `config.json` 的 `pushServiceUrl` | 默认 `service_url` |
+| 负载必填字段 | `task_pusher.py` 的 `required_fields` | `msgContent` 的 8 个字段 |
+| 内容长度上限 | `config.json` 的 `max_content_length` | 5000 字符 |
+
+`--json` 输出包含 `synced_version`（基线）、`latest_version`（最新版）、`has_update`（是否有更新）、`compatible`（是否兼容）和 `diff`（差异明细），方便脚本判断是否需要重新同步负载格式。
 
 认证码优先级：
 1. macOS Keychain（通过 `hwpush config auth --code <code>` / `hwpush init --code <code>` 或交互式方式设置）
@@ -191,8 +234,8 @@ variables:
 hwpush/
 ├── src/
 │   ├── main.rs              # CLI 入口
-│   ├── cli/                 # 命令路由（init, push, template, config）
-│   ├── core/                # 推送引擎与校验
+│   ├── cli/                 # 命令路由（init, push, template, config, skill-check）
+│   ├── core/                # 推送引擎、校验与 skill 更新检查
 │   ├── config/              # TOML 配置与 Keychain
 │   ├── template/            # 模板增删改查与渲染
 │   └── storage/             # SQLite 推送历史

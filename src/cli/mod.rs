@@ -1,13 +1,15 @@
+use crate::config;
 use clap::Subcommand;
 use thiserror::Error;
-use crate::config;
 
 mod init;
 mod push;
+mod skill_check;
 mod template;
 
 pub use init::*;
 pub use push::*;
+pub use skill_check::*;
 pub use template::*;
 
 #[derive(Subcommand, Debug)]
@@ -23,6 +25,9 @@ pub enum Command {
 
     /// 管理配置
     Config(ConfigArgs),
+
+    /// 检查 today-task skill 是否有更新
+    SkillCheck(SkillCheckArgs),
 }
 
 #[derive(clap::Args, Debug)]
@@ -62,6 +67,9 @@ pub enum CliError {
 
     #[error("Keychain 错误: {0}")]
     Keychain(String),
+
+    #[error("更新检查错误: {0}")]
+    SkillCheck(String),
 }
 
 pub fn dispatch(command: Command) -> Result<(), CliError> {
@@ -70,6 +78,7 @@ pub fn dispatch(command: Command) -> Result<(), CliError> {
         Command::Push(args) => push::execute(args),
         Command::Template(args) => template::execute(args),
         Command::Config(args) => execute_config(args),
+        Command::SkillCheck(args) => skill_check::execute(args),
     }
 }
 
@@ -78,10 +87,7 @@ fn execute_config(args: ConfigArgs) -> Result<(), CliError> {
         ConfigAction::Get { json } => {
             let cfg = config::profile::load()?;
             if json {
-                println!(
-                    "{}",
-                    serde_json::to_string_pretty(&cfg).unwrap_or_default()
-                );
+                println!("{}", serde_json::to_string_pretty(&cfg).unwrap_or_default());
             } else {
                 println!("{}", toml::to_string_pretty(&cfg).unwrap_or_default());
             }

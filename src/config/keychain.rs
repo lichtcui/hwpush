@@ -24,8 +24,7 @@ pub fn get_auth_code() -> Result<String, String> {
         .find_generic_password(SERVICE_NAME, ACCOUNT_NAME)
         .map_err(|_| "Keychain 中未找到认证码".to_string())?;
 
-    String::from_utf8(data.to_vec())
-        .map_err(|e| format!("Keychain 中数据不是有效 UTF-8: {e}"))
+    String::from_utf8(data.to_vec()).map_err(|e| format!("Keychain 中数据不是有效 UTF-8: {e}"))
 }
 
 fn delete_auth_code() -> Result<(), String> {

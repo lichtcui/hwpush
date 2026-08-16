@@ -1,6 +1,6 @@
-use clap::{Args, Subcommand};
 use crate::cli::CliError;
 use crate::template;
+use clap::{Args, Subcommand};
 
 #[derive(Args, Debug)]
 pub struct TemplateArgs {
@@ -29,8 +29,7 @@ pub enum TemplateAction {
 pub fn execute(args: TemplateArgs) -> Result<(), CliError> {
     match args.action {
         TemplateAction::List { json } => {
-            let list = template::manager::list()
-                .map_err(|e| CliError::Template(e.to_string()))?;
+            let list = template::manager::list().map_err(|e| CliError::Template(e.to_string()))?;
             if json {
                 let output: Vec<serde_json::Value> = list
                     .iter()
@@ -41,7 +40,10 @@ pub fn execute(args: TemplateArgs) -> Result<(), CliError> {
                         })
                     })
                     .collect();
-                println!("{}", serde_json::to_string_pretty(&output).unwrap_or_default());
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&output).unwrap_or_default()
+                );
             } else {
                 if list.is_empty() {
                     println!("未找到模板。");
@@ -49,7 +51,11 @@ pub fn execute(args: TemplateArgs) -> Result<(), CliError> {
                 }
                 println!("可用模板:");
                 for tmpl in &list {
-                    println!("  - {}: {}", tmpl.name, tmpl.description.as_deref().unwrap_or(""));
+                    println!(
+                        "  - {}: {}",
+                        tmpl.name,
+                        tmpl.description.as_deref().unwrap_or("")
+                    );
                 }
             }
         }
@@ -59,8 +65,7 @@ pub fn execute(args: TemplateArgs) -> Result<(), CliError> {
             println!("{content}");
         }
         TemplateAction::New { name } => {
-            template::manager::create(&name)
-                .map_err(|e| CliError::Template(e.to_string()))?;
+            template::manager::create(&name).map_err(|e| CliError::Template(e.to_string()))?;
             println!("模板 '{name}' 已创建。");
         }
         TemplateAction::Edit { name } => {
@@ -76,8 +81,7 @@ pub fn execute(args: TemplateArgs) -> Result<(), CliError> {
             }
         }
         TemplateAction::Delete { name } => {
-            template::manager::delete(&name)
-                .map_err(|e| CliError::Template(e.to_string()))?;
+            template::manager::delete(&name).map_err(|e| CliError::Template(e.to_string()))?;
             println!("模板 '{name}' 已删除。");
         }
     }

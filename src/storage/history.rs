@@ -1,4 +1,4 @@
-use rusqlite::{params, Connection};
+use rusqlite::{Connection, params};
 use std::path::Path;
 
 #[allow(dead_code)]
@@ -13,12 +13,10 @@ pub struct HistoryRecord {
 fn ensure_db(path: &str) -> Result<Connection, String> {
     let db_path = Path::new(path);
     if let Some(parent) = db_path.parent() {
-        std::fs::create_dir_all(parent)
-            .map_err(|e| format!("创建存储目录失败: {e}"))?;
+        std::fs::create_dir_all(parent).map_err(|e| format!("创建存储目录失败: {e}"))?;
     }
 
-    let conn = Connection::open(path)
-        .map_err(|e| format!("打开数据库失败: {e}"))?;
+    let conn = Connection::open(path).map_err(|e| format!("打开数据库失败: {e}"))?;
 
     conn.execute(
         "CREATE TABLE IF NOT EXISTS push_history (
@@ -35,7 +33,12 @@ fn ensure_db(path: &str) -> Result<Connection, String> {
     Ok(conn)
 }
 
-pub fn record_push(path: &str, task_name: &str, task_id: &str, code: &str) -> Result<HistoryRecord, String> {
+pub fn record_push(
+    path: &str,
+    task_name: &str,
+    task_id: &str,
+    code: &str,
+) -> Result<HistoryRecord, String> {
     let conn = ensure_db(path)?;
 
     conn.execute(

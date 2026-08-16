@@ -15,16 +15,18 @@
 
 ```
 src/main.rs           → CLI 入口，clap 解析器
-src/cli/mod.rs        → 命令路由（Init/Push/Template/Config）
+src/cli/mod.rs        → 命令路由（Init/Push/Template/Config/SkillCheck）
 src/cli/init.rs       → hwpush init
 src/cli/push.rs       → hwpush push（文件/标准输入/模板 → 校验 → 推送 → 记录）
 src/cli/template.rs   → hwpush template（列出/查看/新建/编辑/删除）
+src/cli/skill_check.rs→ hwpush skill-check（CLI 参数与输出）
 src/config/mod.rs     → 配置模块根
-src/config/profile.rs → TOML 配置读写（~/.config/hwpush/config.toml）
+src/config/profile.rs → TOML 配置读写（~/.config/hwpush/config.toml，含 [skill] 段）
 src/config/keychain.rs→ macOS Keychain 集成（security-framework）
 src/core/mod.rs       → 核心模块根
 src/core/pusher.rs    → 负载构建 + HTTP POST 到负一屏 API
 src/core/validator.rs → 内容校验（长度、必填字段）
+src/core/skill_check.rs→ today-task skill 更新检查（版本比较 + ClawHub registry 查询）
 src/template/mod.rs   → 模板模块根
 src/template/manager.rs→ 模板增删改查、变量插值、Front-matter 解析
 src/storage/mod.rs    → 存储模块根
@@ -39,6 +41,7 @@ templates/            → 内置模板（daily.md, news.md）
 3. **模板解析**: 用户目录（`~/.config/hwpush/templates/`）优先于内置模板。
 4. **内容校验**: 最大 5000 字符；name 和 content 为必填字段。
 5. **隐私保护**: 认证码在日志中须脱敏显示（`abc***` 格式）。
+6. **skill 更新检查**: `skill-check` 以**格式兼容性**为判断核心，而非纯版本对比。它从 ClawHub 官方仓库（`https://clawhub.com`，可用 `CLAWHUB_REGISTRY` 覆盖）拉取 `today-task` 最新版的 `config.json` 与 `scripts/task_pusher.py`，对比三项指标：推送服务地址（`pushServiceUrl` vs `HW_DEFAULT_SERVICE_URL`）、负载必填字段（`required_fields` vs `HW_MSG_FIELDS`）、内容长度上限（`max_content_length` vs 5000）。仅当最新版有更新**且格式不兼容**时才列出差异与 changelog；兼容时只输出一行提示（避免无关紧要的版本刷屏）。基线版本存于配置 `[skill].synced_version`，确认兼容后用 `--mark-synced` 更新。注意镜像仓库 `mirror-cn.clawhub.com` 的 `/versions` 与 `/file` 接口不可用，默认应使用官方地址；文件拉取失败时降级为纯版本提示。
 
 ## 配置路径
 
@@ -61,10 +64,12 @@ hwpush
 │   ├── new <名称>                # 新建模板
 │   ├── edit <名称>               # 编辑模板
 │   └── delete <名称>             # 删除模板
-└── config
-    ├── get                       # 查看配置
-    ├── set <键> <值>             # 设置配置
-    └── auth                      # 更新认证码
+├── config
+│   ├── get                       # 查看配置
+│   ├── set <键> <值>             # 设置配置
+│   └── auth                      # 更新认证码
+└── skill-check                   # 检查 today-task skill 是否有更新
+    [--registry <url>] [--synced-version <v>] [--mark-synced] [--json]
 ```
 
 ## 测试理念

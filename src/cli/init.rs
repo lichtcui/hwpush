@@ -1,6 +1,6 @@
-use clap::Args;
 use crate::cli::CliError;
 use crate::config;
+use clap::Args;
 
 #[derive(Args, Debug)]
 pub struct InitArgs {
@@ -22,8 +22,7 @@ pub fn execute(args: InitArgs) -> Result<(), CliError> {
 
     // 2. Auth code: use --code flag or prompt interactively
     if let Some(code) = &args.code {
-        config::keychain::set_auth_code(code)
-            .map_err(|e| CliError::Keychain(e.to_string()))?;
+        config::keychain::set_auth_code(code).map_err(|e| CliError::Keychain(e.to_string()))?;
         println!("认证码已保存到 Keychain。");
     } else {
         let code = rpassword::prompt_password("请输入认证码（直接回车跳过）: ")
